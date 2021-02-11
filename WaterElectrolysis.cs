@@ -11,7 +11,7 @@ using System.Reflection;
 namespace Water_electrolysis
 {
     [BepInDependency("me.xiaoye97.plugin.Dyson.LDBTool", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("Gnimaerd.DSP.plugin.WaterElectrolysis", "WaterElectrolysis", "1.0")]
+    [BepInPlugin("Gnimaerd.DSP.plugin.WaterElectrolysis", "WaterElectrolysis", "1.1")]
     public class WaterElectrolysis : BaseUnityPlugin
     {
         private Sprite icon;
@@ -20,6 +20,7 @@ namespace Water_electrolysis
             var ab = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("Water_electrolysis.waterelecicon"));
             icon = ab.LoadAsset<Sprite>("WaterElec3");
             LDBTool.EditDataAction += ChangeHeat;
+            LDBTool.EditDataAction += ChangeCollectorEnergyNeed;
             LDBTool.PreAddDataAction += AddTranslate;
             LDBTool.PostAddDataAction += AddWaterToH;
         }
@@ -29,12 +30,21 @@ namespace Water_electrolysis
             if (proto is ItemProto && proto.ID == 1120)
             {
                 var itemp = proto as ItemProto;
-                itemp.HeatValue = 43960;
+                itemp.HeatValue = 439600;
             }
             else if (proto is ItemProto && proto.ID == 1114)
             {
                 var itemp = proto as ItemProto;
-                itemp.HeatValue = 8400000;
+                itemp.HeatValue = 8000000;
+            }
+        }
+
+        void ChangeCollectorEnergyNeed(Proto proto)
+        {
+            if (proto is ItemProto && proto.ID == 2105)
+            {
+                var clct = proto as ItemProto;
+                clct.prefabDesc.workEnergyPerTick = 30000;
             }
         }
 
@@ -57,7 +67,9 @@ namespace Water_electrolysis
             waterele.sid = "1110".Translate();
             Traverse.Create(waterele).Field("_iconSprite").SetValue(icon);
             waterele.TimeSpend = 30;
-            waterele.description = "电解水并获取氢气。";
+            waterele.Description = "催化电解描述";
+            waterele.description = "催化电解描述".Translate();
+            waterele.preTech = LDB.techs.Select(1121);
 
             //氢气的合成公式里加入这个公式
             var h = LDB.items.Select(1120);
