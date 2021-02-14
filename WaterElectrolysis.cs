@@ -7,26 +7,36 @@ using HarmonyLib;
 using xiaoye97;
 using UnityEngine;
 using System.Reflection;
+using BepInEx.Configuration;
 
 namespace Water_electrolysis
 {
     [BepInDependency("me.xiaoye97.plugin.Dyson.LDBTool", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("Gnimaerd.DSP.plugin.WaterElectrolysis", "WaterElectrolysis", "1.1")]
+    [BepInPlugin("Gnimaerd.DSP.plugin.WaterElectrolysis", "WaterElectrolysis", "1.2")]
     public class WaterElectrolysis : BaseUnityPlugin
     {
         private Sprite icon;
+        private static ConfigEntry<bool> BalanceAdjustment;
         void Start()
         {
             var ab = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("Water_electrolysis.waterelecicon"));
+            WaterElectrolysis.BalanceAdjustment = Config.Bind<bool>("config", "BalanceAdjustment", true, "是否（true或false）进行氢气能量和轨道采集器功耗等平衡调整。Whether to change the hydrogen energy and the power consumption of the orbital collector (by setting true or false.)");
             icon = ab.LoadAsset<Sprite>("WaterElec3");
-            LDBTool.EditDataAction += ChangeHeat;
-            LDBTool.EditDataAction += ChangeCollectorEnergyNeed;
+            if(WaterElectrolysis.BalanceAdjustment.Value)
+            {
+                LDBTool.EditDataAction += ChangeHeat;
+                LDBTool.EditDataAction += ChangeCollectorEnergyNeed;
+            }
             LDBTool.PreAddDataAction += AddTranslate;
             LDBTool.PostAddDataAction += AddWaterToH;
         }
 
         void ChangeHeat(Proto proto)
         {
+            if(!BalanceAdjustment.Value)
+            {
+                return;
+            }
             if (proto is ItemProto && proto.ID == 1120)
             {
                 var itemp = proto as ItemProto;
@@ -41,6 +51,10 @@ namespace Water_electrolysis
 
         void ChangeCollectorEnergyNeed(Proto proto)
         {
+            if (!BalanceAdjustment.Value)
+            {
+                return;
+            }
             if (proto is ItemProto && proto.ID == 2105)
             {
                 var clct = proto as ItemProto;
