@@ -37,8 +37,8 @@ namespace MusicBox
                 List<string> keystrs = new List<string>(); //最终播放音频名
                 List<int> ids = new List<int>(); //对应音符的物品id，用以计算音区
                 List<char> keychars = new List<char>();//音名
-                List<int> semi = new List<int> { 0, 0, 0 };//半音
-                List<int> delay = new List<int> { 0, 0, 0 };//音符播放延迟
+                List<int> semi = new List<int>();//半音
+                List<int> delay = new List<int>();//音符播放延迟
                 int idx = 0;
                 for (idx = 0; idx < 7; idx++)
                 {
@@ -46,15 +46,19 @@ namespace MusicBox
                     {
                         if(_this.grids[8].itemId > 0)
                         {
-                            semi[0] = -1;
+                            semi.Add(-1);
                         }
                         else if(_this.grids[9].itemId > 0)
                         {
-                            semi[0] = 1;
+                            semi.Add(1);
+                        }
+                        else
+                        {
+                            semi.Add(0);
                         }
                         ids.Add(_this.grids[idx].itemId);
                         keychars.Add(pitchmap[idx%10]);
-                        delay[0] = _this.grids[7].count;
+                        delay.Add(_this.grids[7].count);
                         break;
                     }
                 }
@@ -64,15 +68,19 @@ namespace MusicBox
                     {
                         if (_this.grids[18].itemId > 0)
                         {
-                            semi[1] = -1;
+                            semi.Add(-1);
                         }
                         else if (_this.grids[19].itemId > 0)
                         {
-                            semi[1] = 1;
+                            semi.Add(1);
+                        }
+                        else
+                        {
+                            semi.Add(0);
                         }
                         ids.Add(_this.grids[idx].itemId);
                         keychars.Add(pitchmap[idx % 10]);
-                        delay[1] = _this.grids[17].count;
+                        delay.Add(_this.grids[17].count);
                         break;
                     }
                 }
@@ -82,15 +90,19 @@ namespace MusicBox
                     {
                         if (_this.grids[28].itemId > 0)
                         {
-                            semi[2] = -1;
+                            semi.Add(-1);
                         }
                         else if (_this.grids[29].itemId > 0)
                         {
-                            semi[2] = 1;
+                            semi.Add(1);
+                        }
+                        else
+                        {
+                            semi.Add(0);
                         }
                         ids.Add(_this.grids[idx].itemId);
                         keychars.Add(pitchmap[idx % 10]);
-                        delay[2] = _this.grids[27].count;
+                        delay.Add(_this.grids[27].count);
                         break;
                     }
                 }
