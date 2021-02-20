@@ -7,6 +7,7 @@ using HarmonyLib;
 using xiaoye97;
 using UnityEngine;
 using System.Reflection;
+using BepInEx.Configuration;
 
 namespace SmelterMiner
 {
@@ -16,6 +17,8 @@ namespace SmelterMiner
     {
         private Sprite iconA;
         private Sprite iconB;
+        public static ConfigEntry<bool> ActiveCustomizeRate;
+        public static ConfigEntry<float> CustomRate;
         //public static int tickcount = 0;
         public static Dictionary<int, int> ProductMapA;
         public static Dictionary<int, int> ProductMapB;
@@ -25,6 +28,9 @@ namespace SmelterMiner
             var ab = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("SmelterMiner.smelterminersicons"));
             iconA = ab.LoadAsset<Sprite>("SmelterMinerA");
             iconB = ab.LoadAsset<Sprite>("SmelterMinerB");
+
+            ActiveCustomizeRate = Config.Bind<bool>("config", "ActiveCustomizeMiningRate", false, "Turn this to true if you want to customize mining rate(possibility to consume the minerals).如果你想自定义矿物消耗速率请把此项设置为true。");
+            CustomRate = Config.Bind<float>("config","MiningRate", 1f, "Cutomize your mining rate. 自定义采矿消耗速度。");
 
             //初始化熔炉产物对应关系
             ProductMapA = new Dictionary<int, int> { };
@@ -74,8 +80,12 @@ namespace SmelterMiner
         
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MinerComponent), "InternalUpdate")]
-        public static bool InternalUpdatePatch(ref MinerComponent __instance,ref uint __result, ref PlanetFactory factory, ref VeinData[] veinPool, float power, ref float miningRate, ref float miningSpeed,ref int[] productRegister)
+        public static bool InternalUpdatePatch(ref MinerComponent __instance,ref uint __result, ref PlanetFactory factory, ref VeinData[] veinPool, float power, ref float miningRate, ref float miningSpeed, ref int[] productRegister)
         {
+            if (ActiveCustomizeRate.Value)
+            {
+                miningRate = CustomRate.Value;
+            }
             if (power < 0.1f)
             {
                 return true;
