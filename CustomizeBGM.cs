@@ -19,14 +19,18 @@ namespace CustomizeBGM
         public static int clickcount = 0;
         public static List<AudioClip> acac;
         public static int bgmplaying;
+        public static AudioSource RootAS;
         public static AudioSource newbgmAS;
         public static ConfigEntry<bool> RandomPlay;
+        public static ConfigEntry<bool> ChangeFollowOri;
+        public static ConfigEntry<KeyCode> SwitchKey;
         public static long beginsec = 0;
         public static float bgmlength = 0;
         void Start()
         {
             RandomPlay = Config.Bind<bool>("config", "RandomPlay", true, "If you set RandomPlay to false, it will play bgm in order of file name. 如果设置成false，就会按文件名顺序播放bgm。");
-
+            ChangeFollowOri = Config.Bind<bool>("config", "SwitchAsOri", false, "If switch BGM when enter a new type of planet, like the original setting. Set this to true may sometimes cause the BGM suddenly stop. 是否在进入新的星球时切换BGM。使用这个可能导致BGM偶尔会突然停止。");
+            SwitchKey = Config.Bind<KeyCode>("config", "SwitchKey", KeyCode.O, "Press this to manually switch the bgm to next(next or random, depends on the RandomPlay configuration). 手动切换BGM的按键（随机切换还是顺序切换取决于是否随机播放）。");
             bgmplaying = 0;
             Harmony.CreateAndPatchAll(typeof(CustomizeBGM));
 
@@ -50,23 +54,25 @@ namespace CustomizeBGM
         {
             try
             {
+                if(newbgmAS == null)
+                {
+                    return;
+                }
+
                 if (newbgmAS != null)
                 {
                     newbgmAS.volume = VFAudio.audioVolume * VFAudio.musicVolume;
                 }
-                if(DateTime.Now.Ticks/10000000-beginsec > bgmlength)
+                if(DateTime.Now.Ticks/10000000-beginsec > bgmlength || Input.GetKeyDown(SwitchKey.Value))
                 {
+                    newbgmAS.Stop();
+                    
                     System.Random rd = new System.Random();
                     int rdidx = rd.Next() % acac.Count;
                     if (!RandomPlay.Value)
                     {
                         rdidx = bgmplaying % acac.Count;
-                        bgmplaying = (bgmplaying + 1) % bgmplaying;
-                    }
-                    newbgmAS.Stop();
-                    if (newbgmAS.clip != null)
-                    {
-                        AudioClip.Destroy(newbgmAS.clip);
+                        bgmplaying = (bgmplaying + 1) % acac.Count;
                     }
 
                     newbgmAS.clip = acac[rdidx];
@@ -80,6 +86,7 @@ namespace CustomizeBGM
             }
             catch (Exception)
             {
+                newbgmAS = null;
             }
         }
 
@@ -122,24 +129,23 @@ namespace CustomizeBGM
                 if (!RandomPlay.Value)
                 {
                     rdidx = bgmplaying % acac.Count;
-                    bgmplaying = (bgmplaying + 1) % bgmplaying;
+                    bgmplaying = (bgmplaying + 1) % acac.Count;
                 }
-                AudioSource audioSourceBGM = BGMController.instance.musics[bgmIndex];
-                audioSourceBGM.Stop();
+                RootAS = BGMController.instance.musics[bgmIndex];
+                RootAS.Stop();
                 if (newbgmAS == null)
                 {
-                    newbgmAS = audioSourceBGM.gameObject.AddComponent<AudioSource>();
+                    newbgmAS = RootAS.gameObject.AddComponent<AudioSource>();
+                }
+                else if(ChangeFollowOri.Value)
+                {
+                    newbgmAS.Stop(); 
+                    newbgmAS = RootAS.gameObject.AddComponent<AudioSource>();
                 }
                 else
                 {
-                    newbgmAS.Stop(); 
-                    newbgmAS = audioSourceBGM.gameObject.AddComponent<AudioSource>();
+                    return;
                 }
-
-                //if (newbgmAS.clip != null)
-                //{
-                //    AudioClip.Destroy(newbgmAS.clip);
-                //}
 
                 newbgmAS.clip = acac[rdidx];
                 newbgmAS.volume = VFAudio.audioVolume * VFAudio.musicVolume;
