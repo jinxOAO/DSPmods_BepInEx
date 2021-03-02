@@ -18,6 +18,7 @@ namespace SmelterMiner
         private Sprite iconA;
         private Sprite iconB;
         private Sprite iconC;
+        public static ConfigEntry<bool> EasyMode;
         public static ConfigEntry<bool> ActiveCustomizeRate;
         public static ConfigEntry<float> CustomRate;
         //public static int tickcount = 0;
@@ -32,6 +33,7 @@ namespace SmelterMiner
             iconB = ab.LoadAsset<Sprite>("SmelterMinerB");
             iconC = ab.LoadAsset<Sprite>("SmelterMinerC");
 
+            EasyMode = Config.Bind<bool>("config", "EasyMode", false, "Trun this to true to greatly reduce technological requirements and construction costs of the new mining machines (Not recommended). 设置为true使得科技需求和建造成本大幅降低，让你在前期即可使用这些新的矿机（不推荐）。");
             ActiveCustomizeRate = Config.Bind<bool>("config", "ActiveCustomizeMiningRate", false, "Turn this to true if you want to customize mining rate(possibility to consume the minerals).如果你想自定义矿物消耗速率请把此项设置为true。");
             CustomRate = Config.Bind<float>("config","MiningRate", 1f, "Cutomize your mining rate. 自定义采矿消耗速度。");
 
@@ -152,8 +154,15 @@ namespace SmelterMiner
                             Assert.Positive(num);
                             if (veinPool[num].id == 0)
                             {
-                                __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
-                                __instance.GetMinimumVeinAmount(factory, veinPool);
+                                try
+                                {
+                                    __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
+                                    __instance.GetMinimumVeinAmount(factory, veinPool);
+                                }
+                                catch (Exception)
+                                {
+                                    Debug.Log(__instance.currentVeinIndex.ToString() + "  of 1");
+                                }
                                 if (__instance.veinCount > 1)
                                 {
                                     __instance.currentVeinIndex %= __instance.veinCount;
@@ -188,8 +197,7 @@ namespace SmelterMiner
                                     
                                     __instance.productCount++;
                                     productRegister[__instance.productId]++;
-                                    
-                                    for (int igm = 0; igm < ConsumeRatio; igm++)//一次产物输出采矿采几次
+                                    for (int igm = 0; igm < ConsumeRatio && veinPool[num].amount > 0; igm++)//一次产物输出采矿采几次
                                     {
                                         bool flag = true;
                                         if (miningRate < 0.99999f)
@@ -216,8 +224,16 @@ namespace SmelterMiner
                                                 short groupIndex2 = veinPool[num].groupIndex;
                                                 veinGroups2[(int)groupIndex2].count = veinGroups2[(int)groupIndex2].count - 1;
                                                 factory.RemoveVeinWithComponents(num);
-                                                __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
-                                                __instance.GetMinimumVeinAmount(factory, veinPool);
+                                                try
+                                                {
+
+                                                    __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
+                                                    __instance.GetMinimumVeinAmount(factory, veinPool);
+                                                }
+                                                catch (Exception)
+                                                {
+                                                    Debug.Log(__instance.currentVeinIndex.ToString() + "  of 2");
+                                                }
                                             }
                                             else
                                             {
@@ -225,12 +241,20 @@ namespace SmelterMiner
                                             }
                                         }
                                     }
-                                    
                                 }
                                 else
                                 {
-                                    __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
-                                    __instance.GetMinimumVeinAmount(factory, veinPool);
+                                    try
+                                    {
+
+                                        __instance.RemoveVeinFromArray(__instance.currentVeinIndex);
+                                        __instance.GetMinimumVeinAmount(factory, veinPool);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        Debug.Log(__instance.currentVeinIndex.ToString() + "  of 3");
+                                    }
+                                    
                                 }
                                 if (__instance.veinCount > 1)
                                 {
@@ -306,8 +330,14 @@ namespace SmelterMiner
             //SMinerARecipe.sid = "2509".Translate();
             Traverse.Create(SMinerARecipe).Field("_iconSprite").SetValue(iconA);
             SMinerARecipe.TimeSpend = 60;
-            SMinerARecipe.preTech = LDB.techs.Select(1126);            
-            
+            SMinerARecipe.preTech = LDB.techs.Select(1126); 
+            if (EasyMode.Value)//如果开启了简单模式
+            {
+                SMinerARecipe.Items = new int[] { 2301, 2302 };
+                SMinerARecipe.ItemCounts = new int[] { 1, 5 };
+                SMinerARecipe.preTech = LDB.techs.Select(1401);
+            }
+
             SMinerA.ID = 9446;
             SMinerA.Name = "熔炉采矿机A型";
             SMinerA.name = "熔炉采矿机A型".Translate();
@@ -346,6 +376,12 @@ namespace SmelterMiner
             Traverse.Create(SMinerBRecipe).Field("_iconSprite").SetValue(iconB);
             SMinerBRecipe.TimeSpend = 60;
             SMinerBRecipe.preTech = LDB.techs.Select(1126);
+            if (EasyMode.Value)
+            {
+                SMinerBRecipe.Items = new int[] { 2301, 2302 };
+                SMinerBRecipe.ItemCounts = new int[] { 1, 5 };
+                SMinerBRecipe.preTech = LDB.techs.Select(1401);
+            }
 
             SMinerB.ID = 9447;
             SMinerB.Name = "熔炉采矿机B型";
@@ -384,7 +420,13 @@ namespace SmelterMiner
             //SMinerCRecipe.sid = "2509".Translate();
             Traverse.Create(SMinerCRecipe).Field("_iconSprite").SetValue(iconC);
             SMinerCRecipe.TimeSpend = 60;
-            SMinerCRecipe.preTech = LDB.techs.Select(1303);
+            SMinerCRecipe.preTech = LDB.techs.Select(1303); 
+            if (EasyMode.Value)
+            {
+                SMinerCRecipe.Items = new int[] { 2301, 2309 };
+                SMinerCRecipe.ItemCounts = new int[] { 1, 5 };
+                SMinerCRecipe.preTech = LDB.techs.Select(1121);
+            }
 
             SMinerC.ID = 9448;
             SMinerC.Name = "化工采矿机C型";
