@@ -137,7 +137,7 @@ namespace RecyclableFuelRod
             long num = energy * __instance.useFuelPerTick / __instance.genEnergyPerTick;
             if (__instance.fuelEnergy > num)
             {
-                __instance.fuelEnergy -= 5*num;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                __instance.fuelEnergy -= num;
             }
             else
             {
