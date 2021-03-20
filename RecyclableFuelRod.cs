@@ -12,7 +12,7 @@ using BepInEx.Configuration;
 namespace RecyclableFuelRod
 {
     [BepInDependency("me.xiaoye97.plugin.Dyson.LDBTool", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("Gnimaerd.DSP.plugin.RecyclableFuelRod", "RecyclableFuelRod", "1.0")]
+    [BepInPlugin("Gnimaerd.DSP.plugin.RecyclableFuelRod", "RecyclableFuelRod", "1.1")]
     public class RecyclableFuelRod : BaseUnityPlugin
     {
         private Sprite iconAntiInject;
@@ -258,6 +258,7 @@ namespace RecyclableFuelRod
 
             //D
             var DInjectRecipe = oriRecipe.Copy();
+            var EptDRodRecipe = oriRecipe.Copy();
             var EptDRod = oriItem.Copy();
            
             DInjectRecipe.ID = 458;
@@ -274,7 +275,8 @@ namespace RecyclableFuelRod
             //DInjectRecipe.SID = "2509";
             //DInjectRecipe.sid = "2509".Translate();
             Traverse.Create(DInjectRecipe).Field("_iconSprite").SetValue(iconDeutInject);
-            DInjectRecipe.preTech = LDB.techs.Select(1416); 
+            DInjectRecipe.preTech = LDB.techs.Select(1416);
+
 
             EptDRod.ID = 9451;
             EptDRod.Name = "空的氘核燃料棒";
@@ -283,12 +285,12 @@ namespace RecyclableFuelRod
             EptDRod.description = "空的氘核燃料棒描述".Translate();
             EptDRod.GridIndex = 1606;
             EptDRod.HeatValue = 0L;
-            /*
+            
             EptDRod.handcraft = null;
             EptDRod.handcrafts = new List<RecipeProto> ();
             EptDRod.maincraft = null;
             EptDRod.recipes = new List<RecipeProto> ();
-            */
+            
             EptDRod.makes = new List<RecipeProto> { DInjectRecipe };
             Traverse.Create(EptDRod).Field("_iconSprite").SetValue(iconEptD);
 
@@ -308,6 +310,7 @@ namespace RecyclableFuelRod
 
             //D
             var AInjectRecipe = oriRecipe.Copy();
+            var EptARodRecipe = oriRecipe.Copy();
             var EptARod = oriItem.Copy();
 
             AInjectRecipe.ID = 459;
@@ -326,6 +329,7 @@ namespace RecyclableFuelRod
             Traverse.Create(AInjectRecipe).Field("_iconSprite").SetValue(iconAntiInject);
             AInjectRecipe.preTech = LDB.techs.Select(1145);
 
+
             EptARod.ID = 9452;
             EptARod.Name = "空的反物质燃料棒";
             EptARod.name = "空的反物质燃料棒".Translate();
@@ -333,12 +337,12 @@ namespace RecyclableFuelRod
             EptARod.description = "空的反物质燃料棒描述".Translate();
             EptARod.GridIndex = 1607;
             EptARod.HeatValue = 0L;
-            /*
+            
             EptARod.handcraft = null;
             EptARod.handcrafts = new List<RecipeProto>();
             EptARod.maincraft = null;
             EptARod.recipes = new List<RecipeProto>();
-            */
+            
             EptARod.makes = new List<RecipeProto> { AInjectRecipe };
             Traverse.Create(EptARod).Field("_iconSprite").SetValue(iconEptA);
 
