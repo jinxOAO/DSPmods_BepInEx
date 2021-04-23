@@ -271,7 +271,7 @@ namespace RecyclableFuelRod
             DInjectRecipe.ItemCounts = new int[] { 1, 10 };
             DInjectRecipe.Results = new int[] { 1802 };
             DInjectRecipe.ResultCounts = new int[] { 1 };
-            DInjectRecipe.GridIndex = 1611;
+            DInjectRecipe.GridIndex = 1610;
             //DInjectRecipe.SID = "2509";
             //DInjectRecipe.sid = "2509".Translate();
             Traverse.Create(DInjectRecipe).Field("_iconSprite").SetValue(iconDeutInject);
