@@ -23,11 +23,7 @@ namespace RecyclableFuelRod
         public static List<int> OriRods;
         public static List<int> EmptyRods;
         public static List<int> RelatedGenerators;
-        //public static int tickcount = 0;
-        public static Dictionary<int, int> ProductMapA;
-        public static Dictionary<int, int> ProductMapB;
-        public static Dictionary<int, int> ProductMapC;
-        public static Dictionary<int, int> SmelterRatio; // key是产物id，value是每消耗一个矿物的一级产物产出量
+        
         void Start()
         {
             var ab = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("RecyclableFuelRod.recycleicons"));
