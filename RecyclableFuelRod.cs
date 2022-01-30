@@ -8,6 +8,7 @@ using xiaoye97;
 using UnityEngine;
 using System.Reflection;
 using BepInEx.Configuration;
+using System.Reflection.Emit;
 
 namespace RecyclableFuelRod
 {
@@ -24,7 +25,7 @@ namespace RecyclableFuelRod
         public static List<int> EmptyRods;
         public static List<int> RelatedGenerators;
         
-        void Start()
+        public void Awake()
         {
             var ab = AssetBundle.LoadFromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("RecyclableFuelRod.recycleicons"));
             iconAntiInject = ab.LoadAsset<Sprite>("AntiInject");
@@ -56,7 +57,10 @@ namespace RecyclableFuelRod
                 LDBTool.PostAddDataAction += AddAntiRods;
             }
 
+            //var harmony = new Harmony("Gnimaerd.DSP.plugin.RecyclableFuelRod.patch");
+            //harmony.PatchAll(typeof(Patch_Mecha_GenerateEnergy));
             Harmony.CreateAndPatchAll(typeof(RecyclableFuelRod));
+
         }
 
         
@@ -164,14 +168,14 @@ namespace RecyclableFuelRod
             {
                 
                 int num2 = (int)(__instance.fuelInc / __instance.fuelCount);
-                Console.WriteLine("fuleinc is " + __instance.fuelInc.ToString() + "  and num2 ori is " + num2.ToString());
+                //Console.WriteLine("fuleinc is " + __instance.fuelInc.ToString() + "  and num2 ori is " + num2.ToString());
                 num2 = ((num2 > 0) ? ((num2 >10) ? 10 : num2) : 0);
                 __instance.fuelInc -= (short)num2;
                 __instance.productive = LDB.items.Select((int)__instance.fuelId).Productive;
                 if (__instance.productive)
                 {
                     __instance.fuelIncLevel = (byte)num2;
-                    Console.WriteLine("Cargo.incFastDivisionNumerator[(int)__instance.fuelIncLevel] is " + Cargo.incFastDivisionNumerator[(int)__instance.fuelIncLevel].ToString());
+                    //Console.WriteLine("Cargo.incFastDivisionNumerator[(int)__instance.fuelIncLevel] is " + Cargo.incFastDivisionNumerator[(int)__instance.fuelIncLevel].ToString());
                     num = energy * __instance.useFuelPerTick * 40L / (__instance.genEnergyPerTick * (long)Cargo.incFastDivisionNumerator[(int)__instance.fuelIncLevel]);
                 }
                 else
@@ -308,20 +312,149 @@ namespace RecyclableFuelRod
             }
             //return true;
         }
-        
-        
-        /*
+
+
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(PowerGeneratorComponent), "EnergyCap_Fuel")]
-        public static bool EnergyCap_Fuel_Patch(ref PowerGeneratorComponent __instance, ref long __result)
+        [HarmonyPatch(typeof(Mecha), "GenerateEnergy")]
+        public static bool MechaGenerateEnergyPatch(ref Mecha __instance, double dt)
         {
-            long num = ((__instance.fuelCount <= 0 || __instance.fuelId == 1101 ) && __instance.fuelEnergy < __instance.useFuelPerTick) ? (__instance.fuelEnergy * __instance.genEnergyPerTick / __instance.useFuelPerTick) : __instance.genEnergyPerTick;
-            __instance.capacityCurrentTick = num;
-            __result = __instance.capacityCurrentTick;
+            //与发电厂的逻辑不同，机甲是在燃料棒烧光后返还空燃料棒，这是为了能够尽早return true来适配另一个返还空电池的mod，否则会使该mod失效。另一方面，我层尝试类似该mod修改IL代码的方法，但并未成功。
+            //_h是为了区分原版变量，我自己加的后缀
+            double num2_h = 1.0;
+            ItemProto itemProto_h = (__instance.reactorItemId > 0) ? LDB.items.Select(__instance.reactorItemId) : null;
+            if(itemProto_h != null)
+            {
+                num2_h = (double)(itemProto_h.ReactorInc + 1f);
+                if (__instance.reactorItemInc > 0)
+                {
+                    if (itemProto_h.Productive)
+                    {
+                        num2_h *= 1.0 + Cargo.incTableMilli[__instance.reactorItemInc];
+                    }
+                    else
+                    {
+                        num2_h *= 1.0 + Cargo.accTableMilli[__instance.reactorItemInc];
+                    }
+                }
+            }
+            double num3_h = __instance.coreEnergyCap - __instance.coreEnergy;
+            double num4_h = __instance.reactorPowerGen * num2_h * dt;
+            if (num4_h > num3_h)
+            {
+                num4_h = num3_h;
+            }
+            //以下是核心逻辑，如果当前帧应该生成的能量>能量池剩余能量，按理说应该消耗新的燃料，这代表着上一个燃料已经耗尽，于是如果上一个燃料是氘核/反物质燃料棒，则返还空棒
+            //由于到此为止并未对机甲内部能量做任何修改，执行完毕后直接返回原函数
+            if(__instance.reactorEnergy < num4_h && OriRods.Contains(__instance.reactorItemId))
+            {
+                int v;
+                int outinc;
+                if ((v = __instance.player.package.AddItemStacked(__instance.reactorItemId - 1802 + 9451, 1, __instance.reactorItemInc, out outinc)) != 0)
+                {
+                    UIItemup.Up(__instance.reactorItemId - 1802 + 9451, v);
+                }
+            }
+
+            return true;
+
+            //以下是本来想直接覆盖的原函数，逻辑是每次刚开始消耗燃料棒就返还空燃料棒，但是会影响其他mod（指RecycleAccumulator）因此放弃该方案
+            /*
+            __instance.ClearEnergyChange();
+            __instance.ClearChargerDevice();
+            double num = __instance.corePowerGen * dt;
+            __instance.coreEnergy += num;
+            if (__instance.coreEnergy > __instance.coreEnergyCap)
+            {
+                __instance.coreEnergy = __instance.coreEnergyCap;
+            }
+            __instance.MarkEnergyChange(0, num);
+            double num2 = 1.0;
+            ItemProto itemProto = (__instance.reactorItemId > 0) ? LDB.items.Select(__instance.reactorItemId) : null;
+            if (itemProto != null)
+            {
+                num2 = (double)(itemProto.ReactorInc + 1f);
+                if (__instance.reactorItemInc > 0)
+                {
+                    if (itemProto.Productive)
+                    {
+                        num2 *= 1.0 + Cargo.incTableMilli[__instance.reactorItemInc];
+                    }
+                    else
+                    {
+                        num2 *= 1.0 + Cargo.accTableMilli[__instance.reactorItemInc];
+                    }
+                }
+            }
+            double num3 = __instance.coreEnergyCap - __instance.coreEnergy;
+            double num4 = __instance.reactorPowerGen * num2 * dt;
+            if (num4 > num3)
+            {
+                num4 = num3;
+            }
+            while (__instance.reactorEnergy < num4)
+            {
+                int num5 = 0;
+                int num6 = 1;
+                int num7;
+                __instance.reactorStorage.TakeTailItems(ref num5, ref num6, out num7, false);
+                if (num6 <= 0 || num5 <= 0)
+                {
+                    __instance.reactorItemId = 0;
+                    __instance.reactorItemInc = 0;
+                    break;
+                }
+
+                __instance.AddConsumptionStat(num5, num6, __instance.player.nearestFactory);
+                __instance.reactorItemId = num5;
+                ItemProto itemProto2 = LDB.items.Select(num5);
+                __instance.reactorItemInc = ((num7 > 10) ? 10 : num7);
+
+                //下面返还空燃料棒
+                if (OriRods.Contains(num5))
+                {
+                    int v;
+                    int outinc;
+                    if ((v = __instance.player.package.AddItemStacked(num5 - 1802 + 9451, 1, __instance.reactorItemInc, out outinc)) != 0)
+                    {
+                        UIItemup.Up(num5 - 1802 + 9451, v);
+                    }
+                }
+
+                if (itemProto2 != null)
+                {
+                    __instance.reactorEnergy += (double)itemProto2.HeatValue * (1.0 + (itemProto2.Productive ? Cargo.incTableMilli[__instance.reactorItemInc] : 0.0));
+                }
+                __instance.player.controller.gameData.history.AddFeatureValue(2100000 + num5, num6);
+            }
+            if (__instance.reactorEnergy > 0.0)
+            {
+                __instance.MarkEnergyChange(1, __instance.reactorPowerGen * num2 * dt);
+                if (num4 > __instance.reactorEnergy)
+                {
+                    num4 = __instance.reactorEnergy;
+                }
+                __instance.coreEnergy += num4;
+                __instance.reactorEnergy -= num4;
+            }
             return false;
+            */
         }
-        */
-        void AddDeutRods()
+
+
+
+
+            /*
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(PowerGeneratorComponent), "EnergyCap_Fuel")]
+            public static bool EnergyCap_Fuel_Patch(ref PowerGeneratorComponent __instance, ref long __result)
+            {
+                long num = ((__instance.fuelCount <= 0 || __instance.fuelId == 1101 ) && __instance.fuelEnergy < __instance.useFuelPerTick) ? (__instance.fuelEnergy * __instance.genEnergyPerTick / __instance.useFuelPerTick) : __instance.genEnergyPerTick;
+                __instance.capacityCurrentTick = num;
+                __result = __instance.capacityCurrentTick;
+                return false;
+            }
+            */
+            void AddDeutRods()
         {
             var oriRecipe = LDB.recipes.Select(41);
             var oriItem = LDB.items.Select(1802);
@@ -433,9 +566,9 @@ namespace RecyclableFuelRod
             recipeName.ID = 10559;
             recipeName.Name = "氘核燃料棒再灌注";
             recipeName.name = "氘核燃料棒再灌注";
-            recipeName.ZHCN = "氘核燃料棒再灌注（临时修补）";
-            recipeName.ENUS = "Deuteron fuel rod reperfusion (Temp patch)";
-            recipeName.FRFR = "Deuteron fuel rod reperfusion (Temp patch)";
+            recipeName.ZHCN = "氘核燃料棒再灌注";
+            recipeName.ENUS = "Deuteron fuel rod reperfusion";
+            recipeName.FRFR = "Deuteron fuel rod reperfusion";
 
             desc.ID = 10560;
             desc.Name = "氘核燃料棒再灌注描述";
@@ -479,9 +612,9 @@ namespace RecyclableFuelRod
             recipeName.ID = 10563;
             recipeName.Name = "反物质燃料棒再灌注";
             recipeName.name = "反物质燃料棒再灌注";
-            recipeName.ZHCN = "反物质燃料棒再灌注（临时修补）";
-            recipeName.ENUS = "Anitimatter fuel rod reperfusion (Temp patch)";
-            recipeName.FRFR = "Anitimatter fuel rod reperfusion (Temp patch)";
+            recipeName.ZHCN = "反物质燃料棒再灌注";
+            recipeName.ENUS = "Anitimatter fuel rod reperfusion";
+            recipeName.FRFR = "Anitimatter fuel rod reperfusion";
 
             desc.ID = 10564;
             desc.Name = "反物质燃料棒再灌注描述";
@@ -518,4 +651,56 @@ namespace RecyclableFuelRod
             LDBTool.PreAddProto(ProtoType.String, desc2);
         }
     }
+
+    /*
+    //根据RecycleAccumulator by tanukinomori修改 但是我没学会，改了也没实现功能，难受
+    [HarmonyPatch(typeof(Mecha), "GenerateEnergy")]
+    class Patch_Mecha_GenerateEnergy
+    {
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            CodeMatcher matcher = new CodeMatcher(instructions);
+            matcher.
+                MatchForward(true,
+                    new CodeMatch(OpCodes.Ldarg_1),
+                    new CodeMatch(OpCodes.Mul),
+                    new CodeMatch(OpCodes.Stloc_S),
+                    new CodeMatch(OpCodes.Ldloc_S),
+                    new CodeMatch(OpCodes.Ldloc_3),
+                    new CodeMatch(OpCodes.Ble_Un),
+                    new CodeMatch(OpCodes.Ldloc_3),
+                    new CodeMatch(OpCodes.Stloc_S),
+                    new CodeMatch(OpCodes.Br),
+                    new CodeMatch(OpCodes.Ldc_I4_0));// 94
+            var bakOpcode = matcher.Opcode;
+            var bakOperand = matcher.Operand;
+            matcher.
+                SetAndAdvance(OpCodes.Ldarg_0, null).
+                InsertAndAdvance(Transpilers.EmitDelegate<Action<Mecha>>(
+                    mecha => {
+                        if (mecha.reactorItemId == 0)
+                        {
+                            Console.WriteLine("ZERO ID, NOW RETURN");
+                            return;
+                        }
+                        if (!RecyclableFuelRod.OriRods.Contains(mecha.reactorItemId))
+                        {
+                            Console.WriteLine("NOT CONTAINED, NOW RETURN");
+                            return;
+                        }
+                        Console.WriteLine("MECH return activated");
+                        int v;
+                        int outinc;
+                        if ((v = mecha.player.package.AddItemStacked(mecha.reactorItemId - 1802 + 9451, 1, mecha.reactorItemInc, out outinc)) != 0)
+                        {
+                            UIItemup.Up(mecha.reactorItemId - 1802 + 9451, v);
+                        }
+                    })).
+                InsertAndAdvance(new CodeInstruction(bakOpcode, bakOperand));
+            return matcher.InstructionEnumeration();
+        }
+    }
+    */
+
 }
