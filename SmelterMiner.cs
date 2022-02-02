@@ -8,11 +8,12 @@ using xiaoye97;
 using UnityEngine;
 using System.Reflection;
 using BepInEx.Configuration;
+using System.Reflection.Emit;
 
 namespace SmelterMiner
 {
     [BepInDependency("me.xiaoye97.plugin.Dyson.LDBTool", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("Gnimaerd.DSP.plugin.SmelterMiner", "SmelterMiner", "1.4")]
+    [BepInPlugin("Gnimaerd.DSP.plugin.SmelterMiner", "SmelterMiner", "1.5")]
     public class SmelterMiner : BaseUnityPlugin
     {
         private Sprite iconA;
@@ -41,7 +42,7 @@ namespace SmelterMiner
 
             EasyMode = Config.Bind<bool>("config", "EasyMode", false, "Trun this to true to greatly reduce technological requirements and construction costs of the new mining machines (Not recommended). 设置为true使得科技需求和建造成本大幅降低，让你在前期即可使用这些新的矿机（不推荐）。");
             ActiveCustomizeRate = Config.Bind<bool>("config", "ActiveCustomizeMiningRate", false, "Turn this to true if you want to customize mining rate(possibility to consume the minerals).如果你想自定义矿物消耗速率请把此项设置为true。");
-            CustomRate = Config.Bind<float>("config","MiningRate", 1f, "Cutomize your mining rate. 自定义采矿消耗速度。");
+            CustomRate = Config.Bind<float>("config", "MiningRate", 1f, "Cutomize your mining rate. 自定义采矿消耗速度。");
 
             //初始化熔炉产物对应关系
             ProductMapA = new Dictionary<int, int> { };
@@ -83,7 +84,7 @@ namespace SmelterMiner
             ProductMapB.Add(1013, 1113);
             SmelterRatio.Add(1113, 1);
 
-            ProductMapC.Add(1011,1123);
+            ProductMapC.Add(1011, 1123);
             SmelterRatio.Add(1123, 1);
 
             ProductMapC.Add(1015, 1124);
@@ -99,10 +100,10 @@ namespace SmelterMiner
             Harmony.CreateAndPatchAll(typeof(SmelterMiner));
         }
 
-        
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(MinerComponent), "InternalUpdate")]
-        public static bool InternalUpdatePatch(ref MinerComponent __instance,ref uint __result, ref PlanetFactory factory, ref VeinData[] veinPool, float power, ref float miningRate, ref float miningSpeed, ref int[] productRegister)
+        public static bool InternalUpdatePatch(ref MinerComponent __instance, ref uint __result, ref PlanetFactory factory, ref VeinData[] veinPool, float power, ref float miningRate, ref float miningSpeed, ref int[] productRegister)
         {
             if (ActiveCustomizeRate.Value)
             {
@@ -150,7 +151,7 @@ namespace SmelterMiner
                 }
                 int OriId = veinPool[num1gm].productId;
                 int OutputId = OriId;
-                int ConsumeRatio = 1;
+                //int ConsumeRatio = 1;
 
                 //下面基本为原本代码，小修
                 __result = 0U;
@@ -173,12 +174,12 @@ namespace SmelterMiner
                     int num = __instance.veins[__instance.currentVeinIndex];
                     Assert.Positive(num);
                     VeinData[] obj = veinPool;
-                    
+
 
                     if (mapDict.ContainsKey(OriId) && SmelterRatio.ContainsKey(mapDict[OriId]))
                     {
                         OutputId = mapDict[OriId];
-                        ConsumeRatio = SmelterRatio[mapDict[OriId]];
+                        //ConsumeRatio = SmelterRatio[mapDict[OriId]];
                     }
                     lock (obj)
                     {
@@ -219,7 +220,7 @@ namespace SmelterMiner
                                             {
                                                 break;
                                             }
-                                            
+
                                         }
                                     }
                                     else
@@ -229,6 +230,9 @@ namespace SmelterMiner
                                     }
                                     if (num4 > 0)
                                     {
+                                        //重要！！确保消耗是正确的，但是仍需要测试bug
+                                        num4 *= cratio1;
+                                        //!!!!!!!!!!!!!!!!
                                         int num5 = num;
                                         veinPool[num5].amount = veinPool[num5].amount - num4;
                                         if (veinPool[num].amount < __instance.minimumVeinAmount)
@@ -375,7 +379,7 @@ namespace SmelterMiner
                         }
                     }
                 }
-            IL_74B:
+                IL_74B:
                 if (__instance.productCount > 0 && __instance.insertTarget > 0 && __instance.productId > 0)
                 {
                     int num13 = 1;
@@ -402,6 +406,7 @@ namespace SmelterMiner
                         }
                     }
                 }
+                __result = result;
                 return false;
             }
         }
@@ -446,8 +451,8 @@ namespace SmelterMiner
                         //__instance.collectionIds[0] = 1101;
                         //minerPool[__instance.minerId].productId = 1101;
                         if (mapDict.ContainsKey(__instance.storage[0].itemId))
-                        { 
-                            __instance.storage[0].itemId = mapDict[__instance.storage[0].itemId]; 
+                        {
+                            __instance.storage[0].itemId = mapDict[__instance.storage[0].itemId];
                         }
                         //System.Console.WriteLine("GM Patch Activated!!!!!!!!!!!");
                         int productCount = minerPool[__instance.minerId].productCount;
@@ -472,100 +477,93 @@ namespace SmelterMiner
             }
             return false;
         }
-        /*
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(FactorySystem), "GameTick")]
-        public static bool GameTickPatch(FactorySystem __instance)
-        {
-            //var _this = __instance;
-            //if (tickcount % 100 == 0)
-            //{
-            //    int i = 1;
-            //    if (i < _this.minerCursor)
-            //    {
-            //        int ettid = _this.minerPool[i].entityId;
-            //        int idid2 = _this.factory.entityPool[ettid].id;
-            //        int prtid = _this.factory.entityPool[ettid].protoId;
-            //        Console.WriteLine("prtid:" + prtid.ToString());
-            //    }
-            //}
-            //tickcount += 1;
-            return true;
-        }
-        */
-        /*
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(PlayerAction_Build), "UpdateGizmos")]
-        public static bool UpdateGizmosPatch(ref PlayerAction_Build __instance)
+
+        //下面修改熔炉矿机的采矿时的图标
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PlanetFactory), "CreateEntityLogicComponents")]
+        public static void MinerProductIconPatch(ref PlanetFactory __instance, int entityId, PrefabDesc desc, int prebuildId)
         {
-            PowerSystemRenderer.forceConsumersOn = false;
-            PowerSystemRenderer.forceDisksOn = false;
-            PowerSystemRenderer.forceLinesOn = false;
-            foreach (BuildPreview buildPreview in __instance.buildPreviews)
+            int gmProtoId = __instance.entityPool[entityId].protoId;
+            if (gmProtoId != 9446 && gmProtoId != 9447 && gmProtoId != 9448 && gmProtoId != 9466 && gmProtoId != 9467 && gmProtoId != 9468)
             {
-                if (buildPreview.desc.isPowerNode)
-                {
-                    PowerSystemRenderer.forceLinesOn = true;
-                    PowerSystemRenderer.forceConsumersOn = true;
-                    PowerSystemRenderer.forceDisksOn = true;
-                    break;
-                }
-                if (buildPreview.desc.isPowerConsumer)
-                {
-                    PowerSystemRenderer.forceDisksOn = true;
-                }
+                return;
             }
-            CommandState cmd = __instance.controller.cmd;
-            if (cmd.mode == 1 && __instance.handPrefabDesc != null)
+
+            if(desc.minerType != EMinerType.None && desc.minerPeriod > 0)//class line 749
             {
-                if (__instance.handPrefabDesc.minerType == EMinerType.Vein)
+                int numOri = __instance.entityPool[entityId].minerId; //来源于FactorySystem类的方法NewMinerComponent
+                MinerComponent[] minerPoolOri = __instance.factorySystem.minerPool;
+                if (minerPoolOri[numOri].type == EMinerType.Vein || minerPoolOri[numOri].type == EMinerType.Oil)
                 {
-                    __instance.previewGizmoOn = true;
-                    if (__instance.buildPreviews.Count > 0)
+                    //下面修改图标
+                    Dictionary<int, int> mapdict = ProductMapA;
+                    if(gmProtoId == 9447|| gmProtoId == 9467)
                     {
-                        BuildPreview buildPreview2 = __instance.buildPreviews[0];
-                        int num = 0;
-                        int num2 = 0;
-                        int num3 = 0;
-                        while (buildPreview2.refArr != null && num3 < buildPreview2.refCount)
-                        {
-                            //VeinData veinData = __instance.factory.veinPool[buildPreview2.refArr[num3]];
-                            PlanetFactory PF = (PlanetFactory)Traverse.Create(__instance).Field("factory").GetValue();
-                            VeinData veinData = PF.veinPool[buildPreview2.refArr[num3]];
-                            if (num == 0)
-                            {
-                                num = 1101;
-                            }
-                            num2 += veinData.amount;
-                            num3++;
-                        }
-                        if (num > 0 && num2 > 0)
-                        {
-                            UIResourceTip.Show(__instance.previewPose.position + __instance.previewPose.up * 3f, num, num2, 0f);
-                        }
+                        mapdict = ProductMapB;
+                    }
+                    else if(gmProtoId == 9448 || gmProtoId == 9468)
+                    {
+                        mapdict = ProductMapC;
+                    }
+                    int num26Ori = (minerPoolOri[numOri].veinCount == 0) ? 0 : minerPoolOri[numOri].veins[0];
+                    if(mapdict.ContainsKey(__instance.veinPool[num26Ori].productId))
+                    {
+                        __instance.entitySignPool[entityId].iconId0 = (uint)(mapdict[__instance.veinPool[num26Ori].productId]);
                     }
                 }
-                if ((__instance.handPrefabDesc.slotPoses != null && __instance.handPrefabDesc.slotPoses.Length > 0) || (__instance.handPrefabDesc.insertPoses != null && __instance.handPrefabDesc.insertPoses.Length > 0))
-                {
-                    __instance.previewGizmoOn = true;
-                }
-                Debug.Log(__instance.buildPreviews.Count);
-                if(__instance.buildPreviews.Count > 0)
-                {
-                    Debug.Log(__instance.buildPreviews[0].recipeId);
-                    Debug.Log(__instance.buildPreviews[0].outputObjId);
-                    Debug.Log("");
-                }
-                return false;
-            }
-            else
-            {
-
-                return true;
             }
         }
-        */
+
+
+        //下面两个prefix+postfix联合作用。由于新版游戏实际执行的能量消耗、采集速率等属性都使用映射到的modelProto的prefabDesc中的数值，而不是itemProto的PrefabDesc，而修改/新增modelProto我还不会改，会报错（貌似是和模型读取不到有关）
+        //因此，提前修改设定建筑信息时读取的PrefabDesc的信息，在存储建筑属性前先修改一下（改成itemProto的PrefabDesc中对应的某些值），建造建筑设定完成后再改回去
+        //并且，原始item和model执向的貌似是同一个PrefabDesc，所以不能直接改model的，然后再还原成oriItem的prefabDesc，因为改了model的oriItem的也变了，还原不回去了。所以得Copy一个出来改。
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(PlanetFactory), "AddEntityDataWithComponents")]
+        public static bool AddEntityDataPrePatch(EntityData entity, out PrefabDesc __state)
+        {
+            int gmProtoId = entity.protoId;
+            if(gmProtoId != 9446 && gmProtoId != 9447 && gmProtoId != 9448 && gmProtoId != 9466 && gmProtoId != 9467 && gmProtoId != 9468)
+            {
+                __state = null;
+                return true;//不相关建筑直接返回
+            }
+            ItemProto itemProto = LDB.items.Select((int)entity.protoId);
+            if (itemProto == null || !itemProto.IsEntity)
+            {
+                __state = null;
+                return true;
+            }
+            
+            ModelProto modelProto = LDB.models.Select((int)entity.modelIndex);
+            __state = modelProto.prefabDesc;
+            modelProto.prefabDesc = __state.Copy();
+            modelProto.prefabDesc.workEnergyPerTick = itemProto.prefabDesc.workEnergyPerTick;
+            modelProto.prefabDesc.idleEnergyPerTick = itemProto.prefabDesc.idleEnergyPerTick;
+            return true;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(PlanetFactory), "AddEntityDataWithComponents")]
+        public static void AddEntityDataPostPatch(EntityData entity, PrefabDesc __state)
+        {
+            if (__state == null)
+            {
+                return;
+            }
+            int gmProtoId = entity.protoId;
+            if (gmProtoId != 9446 && gmProtoId != 9447 && gmProtoId != 9448 && gmProtoId != 9466 && gmProtoId != 9467 && gmProtoId != 9468)
+            {
+                return;//不相关
+            }
+
+            ModelProto modelProto = LDB.models.Select((int)entity.modelIndex);
+            modelProto.prefabDesc = __state;//还原
+            return;
+        }
+
+
         void AddSmelterMiners()
         {
             //Basic
@@ -590,7 +588,7 @@ namespace SmelterMiner
             //A
             var SMinerARecipe = oriRecipe.Copy();
             var SMinerA = oriItem.Copy();
-           
+
             SMinerARecipe.ID = 452;
             SMinerARecipe.Name = "熔炉采矿机A型";
             SMinerARecipe.name = "熔炉采矿机A型".Translate();
@@ -598,12 +596,12 @@ namespace SmelterMiner
             SMinerARecipe.ItemCounts = new int[] { 1, 10, 10 };
             SMinerARecipe.Results = new int[] { 9446 };
             SMinerARecipe.ResultCounts = new int[] { 1 };
-            SMinerARecipe.GridIndex = 2311;
+            SMinerARecipe.GridIndex = 2610;
             //SMinerARecipe.SID = "2509";
             //SMinerARecipe.sid = "2509".Translate();
             Traverse.Create(SMinerARecipe).Field("_iconSprite").SetValue(iconA);
             SMinerARecipe.TimeSpend = 60;
-            SMinerARecipe.preTech = LDB.techs.Select(1126); 
+            SMinerARecipe.preTech = LDB.techs.Select(1126);
             if (EasyMode.Value)//如果开启了简单模式
             {
                 SMinerARecipe.Items = new int[] { 2301, 2302 };
@@ -617,7 +615,7 @@ namespace SmelterMiner
             SMinerA.Description = "熔炉采矿机A型描述";
             SMinerA.description = "熔炉采矿机A型描述".Translate();
             SMinerA.BuildIndex = 205;
-            SMinerA.GridIndex = 2311;
+            SMinerA.GridIndex = 2610;
             SMinerA.handcraft = SMinerARecipe;
             SMinerA.handcrafts = new List<RecipeProto> { SMinerARecipe };
             SMinerA.maincraft = SMinerARecipe;
@@ -688,7 +686,7 @@ namespace SmelterMiner
             SMinerBRecipe.ItemCounts = new int[] { 1, 10, 10 };
             SMinerBRecipe.Results = new int[] { 9447 };
             SMinerBRecipe.ResultCounts = new int[] { 1 };
-            SMinerBRecipe.GridIndex = 2312;
+            SMinerBRecipe.GridIndex = 2611;
             //SMinerBRecipe.SID = "2509";
             //SMinerBRecipe.sid = "2509".Translate();
             Traverse.Create(SMinerBRecipe).Field("_iconSprite").SetValue(iconB);
@@ -707,7 +705,7 @@ namespace SmelterMiner
             SMinerB.Description = "熔炉采矿机B型描述";
             SMinerB.description = "熔炉采矿机B型描述".Translate();
             SMinerB.BuildIndex = 206;
-            SMinerB.GridIndex = 2312;
+            SMinerB.GridIndex = 2611;
             SMinerB.handcraft = SMinerBRecipe;
             SMinerB.handcrafts = new List<RecipeProto> { SMinerBRecipe };
             SMinerB.maincraft = SMinerBRecipe;
@@ -778,12 +776,12 @@ namespace SmelterMiner
             SMinerCRecipe.ItemCounts = new int[] { 1, 20, 5 };
             SMinerCRecipe.Results = new int[] { 9448 };
             SMinerCRecipe.ResultCounts = new int[] { 1 };
-            SMinerCRecipe.GridIndex = 2412;
+            SMinerCRecipe.GridIndex = 2612;
             //SMinerCRecipe.SID = "2509";
             //SMinerCRecipe.sid = "2509".Translate();
             Traverse.Create(SMinerCRecipe).Field("_iconSprite").SetValue(iconC);
             SMinerCRecipe.TimeSpend = 60;
-            SMinerCRecipe.preTech = LDB.techs.Select(1303); 
+            SMinerCRecipe.preTech = LDB.techs.Select(1303);
             if (EasyMode.Value)
             {
                 SMinerCRecipe.Items = new int[] { 2301, 2309 };
@@ -797,7 +795,7 @@ namespace SmelterMiner
             SMinerC.Description = "化工采矿机C型描述";
             SMinerC.description = "化工采矿机C型描述".Translate();
             SMinerC.BuildIndex = 207;
-            SMinerC.GridIndex = 2412;
+            SMinerC.GridIndex = 2612;
             SMinerC.handcraft = SMinerCRecipe;
             SMinerC.handcrafts = new List<RecipeProto> { SMinerCRecipe };
             SMinerC.maincraft = SMinerCRecipe;
@@ -873,7 +871,7 @@ namespace SmelterMiner
 
 
             //原本的矿机添加可合成物品
-            oriItem.makes = new List<RecipeProto> { SMinerARecipe, SMinerBRecipe, SMinerCRecipe};
+            oriItem.makes = new List<RecipeProto> { SMinerARecipe, SMinerBRecipe, SMinerCRecipe };
             oriBigItem.makes = new List<RecipeProto> { SMinerBigARecipe, SMinerBigBRecipe, SMinerBigCRecipe };
             //smelterOri.makes = new List<RecipeProto> { SMinerARecipe, SMinerBRecipe };
             //chemiOri.makes = new List<RecipeProto> { SMinerCRecipe };
@@ -890,7 +888,7 @@ namespace SmelterMiner
 
         }
 
-       
+
 
         void AddTranslate()
         {
@@ -910,7 +908,7 @@ namespace SmelterMiner
             desc.ENUS = "Mine minerals then automatically smelt the minerals into primary products (iron ingot, stone brick, copper ingot, etc.) and output them.";
             desc.FRFR = "Mine minerals then automatically smelt the minerals into primary products (iron ingot, stone brick, copper ingot, etc.) and output them.";
 
-          
+
             LDBTool.PreAddProto(ProtoType.String, recipeName);
             LDBTool.PreAddProto(ProtoType.String, desc);
 
@@ -1021,5 +1019,102 @@ namespace SmelterMiner
             LDBTool.PreAddProto(ProtoType.String, recipeBig3Name);
             LDBTool.PreAddProto(ProtoType.String, Big3desc);
         }
+
+
+
+        /*
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(FactorySystem), "GameTick")]
+        public static bool GameTickPatch(FactorySystem __instance)
+        {
+            //var _this = __instance;
+            //if (tickcount % 100 == 0)
+            //{
+            //    int i = 1;
+            //    if (i < _this.minerCursor)
+            //    {
+            //        int ettid = _this.minerPool[i].entityId;
+            //        int idid2 = _this.factory.entityPool[ettid].id;
+            //        int prtid = _this.factory.entityPool[ettid].protoId;
+            //        Console.WriteLine("prtid:" + prtid.ToString());
+            //    }
+            //}
+            //tickcount += 1;
+            return true;
+        }
+        */
+        /*
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(PlayerAction_Build), "UpdateGizmos")]
+        public static bool UpdateGizmosPatch(ref PlayerAction_Build __instance)
+        {
+            PowerSystemRenderer.forceConsumersOn = false;
+            PowerSystemRenderer.forceDisksOn = false;
+            PowerSystemRenderer.forceLinesOn = false;
+            foreach (BuildPreview buildPreview in __instance.buildPreviews)
+            {
+                if (buildPreview.desc.isPowerNode)
+                {
+                    PowerSystemRenderer.forceLinesOn = true;
+                    PowerSystemRenderer.forceConsumersOn = true;
+                    PowerSystemRenderer.forceDisksOn = true;
+                    break;
+                }
+                if (buildPreview.desc.isPowerConsumer)
+                {
+                    PowerSystemRenderer.forceDisksOn = true;
+                }
+            }
+            CommandState cmd = __instance.controller.cmd;
+            if (cmd.mode == 1 && __instance.handPrefabDesc != null)
+            {
+                if (__instance.handPrefabDesc.minerType == EMinerType.Vein)
+                {
+                    __instance.previewGizmoOn = true;
+                    if (__instance.buildPreviews.Count > 0)
+                    {
+                        BuildPreview buildPreview2 = __instance.buildPreviews[0];
+                        int num = 0;
+                        int num2 = 0;
+                        int num3 = 0;
+                        while (buildPreview2.refArr != null && num3 < buildPreview2.refCount)
+                        {
+                            //VeinData veinData = __instance.factory.veinPool[buildPreview2.refArr[num3]];
+                            PlanetFactory PF = (PlanetFactory)Traverse.Create(__instance).Field("factory").GetValue();
+                            VeinData veinData = PF.veinPool[buildPreview2.refArr[num3]];
+                            if (num == 0)
+                            {
+                                num = 1101;
+                            }
+                            num2 += veinData.amount;
+                            num3++;
+                        }
+                        if (num > 0 && num2 > 0)
+                        {
+                            UIResourceTip.Show(__instance.previewPose.position + __instance.previewPose.up * 3f, num, num2, 0f);
+                        }
+                    }
+                }
+                if ((__instance.handPrefabDesc.slotPoses != null && __instance.handPrefabDesc.slotPoses.Length > 0) || (__instance.handPrefabDesc.insertPoses != null && __instance.handPrefabDesc.insertPoses.Length > 0))
+                {
+                    __instance.previewGizmoOn = true;
+                }
+                Debug.Log(__instance.buildPreviews.Count);
+                if(__instance.buildPreviews.Count > 0)
+                {
+                    Debug.Log(__instance.buildPreviews[0].recipeId);
+                    Debug.Log(__instance.buildPreviews[0].outputObjId);
+                    Debug.Log("");
+                }
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        */
+
     }
+
 }
