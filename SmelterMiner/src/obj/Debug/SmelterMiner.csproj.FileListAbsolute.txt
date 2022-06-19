@@ -1,0 +1,12 @@
+D:\Work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.csprojAssemblyReference.cache
+D:\Work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.csproj.CoreCompileInputs.cache
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\SmelterMiner.dll
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\SmelterMiner.pdb
+D:\Work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.dll
+D:\Work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.pdb
+G:\work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.csprojAssemblyReference.cache
+G:\work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.csproj.CoreCompileInputs.cache
+G:\work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.dll
+G:\work\CSFile\SmelterMiner\Water electrolysis\obj\Debug\SmelterMiner.pdb
+D:\SteamLibrary\steamapps\common\Dyson Sphere Program\BepInEx\plugins\SmelterMiner.dll
+D:\SteamLibrary\steamapps\common\Dyson Sphere Program\BepInEx\plugins\SmelterMiner.pdb
