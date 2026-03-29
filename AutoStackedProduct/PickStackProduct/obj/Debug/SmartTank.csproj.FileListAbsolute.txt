@@ -1,0 +1,8 @@
+D:\Work\CSFile\SmartTank\SmartTank\bin\Debug\SmartTank.dll
+D:\Work\CSFile\SmartTank\SmartTank\bin\Debug\SmartTank.pdb
+D:\Work\CSFile\SmartTank\SmartTank\obj\Debug\SmartTank.csprojAssemblyReference.cache
+D:\Work\CSFile\SmartTank\SmartTank\obj\Debug\SmartTank.csproj.CoreCompileInputs.cache
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\OverflowTank.dll
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\OverflowTank.pdb
+D:\Work\CSFile\SmartTank\SmartTank\obj\Debug\OverflowTank.dll
+D:\Work\CSFile\SmartTank\SmartTank\obj\Debug\OverflowTank.pdb

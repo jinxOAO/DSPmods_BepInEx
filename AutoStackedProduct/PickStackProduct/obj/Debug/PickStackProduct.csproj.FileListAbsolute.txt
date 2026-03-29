@@ -1,0 +1,6 @@
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\PickStackProduct.dll
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\PickStackProduct.pdb
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\PickStackProduct.csprojAssemblyReference.cache
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\PickStackProduct.csproj.CoreCompileInputs.cache
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\PickStackProduct.dll
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\PickStackProduct.pdb

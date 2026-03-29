@@ -1,0 +1,12 @@
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\AutoStackedProduct.dll
+D:\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\AutoStackedProduct.pdb
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\AutoStackedProduct.csprojAssemblyReference.cache
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\AutoStackedProduct.csproj.CoreCompileInputs.cache
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\AutoStackedProduct.dll
+D:\Work\CSFile\PickStackProduct\PickStackProduct\obj\Debug\AutoStackedProduct.pdb
+F:\GitHubRepository\DSPmods_BepInEx\AutoStackedProduct\PickStackProduct\obj\Debug\AutoStackedProduct.csproj.AssemblyReference.cache
+F:\GitHubRepository\DSPmods_BepInEx\AutoStackedProduct\PickStackProduct\obj\Debug\AutoStackedProduct.csproj.CoreCompileInputs.cache
+F:\GitHubRepository\DSPmods_BepInEx\AutoStackedProduct\PickStackProduct\obj\Debug\AutoStackedProduct.dll
+F:\GitHubRepository\DSPmods_BepInEx\AutoStackedProduct\PickStackProduct\obj\Debug\AutoStackedProduct.pdb
+D:\SteamLibrary\steamapps\common\Dyson Sphere Program\BepInEx\plugins\AutoStackedProduct.dll
+D:\SteamLibrary\steamapps\common\Dyson Sphere Program\BepInEx\plugins\AutoStackedProduct.pdb
